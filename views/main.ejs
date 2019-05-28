@@ -17,7 +17,7 @@
 
                     </div>
                     <label for="todo"></label>
-                   <p></p>  <b>To DO:</b> <p></p> <input type="text" class="form-control" id="input" placeholder="Todo">
+                   <p></p>  <b>To DO:</b> <p></p> <input type="text" class="form-control" id="input" placeholder=" ">
                     <p></p>
                     <div>
                     <button type="submit" class="btn btn-primary">Add</button>
@@ -61,6 +61,7 @@
         const input = $("#input");
         const message = $("#message");
         message.hide();
+
         const displayMessage = (flag,msg)=>{
 
             if(flag){
@@ -93,26 +94,28 @@
         }
 
         const edit = (todo,todoID,editID)=>{
-            let editBtn = $(`#${editID}`);
-            editBtn.click(()=>{
-                fetch(`/${todo._id}`,{
-                    method : "put",
-                    headers : {
-                        "Content-Type" : "application/json; charset=utf-8"
-                    },
-                    body : JSON.stringify({todo : input.val()})
-                }).then((response)=>{
-                    return response.json();
-                }).then((data)=>{
-                    if(data.ok == 1){
-                        let todoIndex = $(`#${todoID}`);
-                        todoIndex.html(data.value.todo);
-                        reset();
-                    }
+$("#input").attr('placeholder' , 'EDIT');
+                let editBtn = $(`#${editID}`);
+                editBtn.click(() => {
+                    fetch(`/${todo._id}`, {
+                        method: "put",
+                        headers: {
+                            "Content-Type": "application/json; charset=utf-8"
+                        },
+                        body: JSON.stringify({todo: input.val()})
+                    }).then((response) => {
+                        return response.json();
+                    }).then((data) => {
+                        if (data.ok === 1) {
+                            let todoIndex = $(`#${todoID}`);
+                            todoIndex.html(data.value.todo);
+                            $("#input").attr('placeholder' , '');
+                            reset();
+                        }
+                    });
                 });
-            });
-        }
-        const deleteTodo = (todo,listItemID,deleteID)=>{
+        };
+        const deleteTask = (todo,listItemID,deleteID)=>{
             let deleteBtn = $(`#${deleteID}`);
             deleteBtn.click(()=>{
                 fetch(`/${todo._id}`,{
@@ -120,7 +123,7 @@
                 }).then((response)=>{
                     return response.json();
                 }).then((data)=>{
-                    if(data.ok == 1){
+                    if(data.ok === 1){
                         $(`#${listItemID}`).remove();
                     }
                 });
@@ -151,7 +154,7 @@
                 let ids = build(todo);
                 display.append(buildTemplate(todo,ids));
                 edit(todo,ids.todoID,ids.editID);
-                deleteTodo(todo,ids.listItemID,ids.deleteID);
+                deleteTask(todo,ids.listItemID,ids.deleteID);
             });
         }
         form.submit((e)=>{
@@ -166,7 +169,7 @@
                 return response.json();
             }).then((data)=>{
                 if(!data.error){
-                    if(data.result.ok == 1 && data.result.n == 1){
+                    if(data.result.ok === 1 && data.result.n === 1){
                         let ids = build(data.document);
                         display.append(buildTemplate(data.document,ids));
                         edit(data.document,ids.todoID,ids.editID);
@@ -177,7 +180,6 @@
                 else
                     displayMessage(false,data.error.message);
                 reset();
-
             });
         });
     });
