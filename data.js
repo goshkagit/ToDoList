@@ -6,7 +6,7 @@ const ObjectId = require('mongodb').ObjectID;
 
 const dbName = "list";
 
-const url = process.env.DB_URL;
+const url = "mongodb://localhost:27017/list";
 
 const mongoOptions = {useNewUrlParser: true};
 

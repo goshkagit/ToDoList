@@ -39,7 +39,7 @@ db.connect((err)=>{
         process.exit(1);
     }
     else{
-        app.listen(process.env.PORT , ()=>{
+        app.listen(3000 , ()=>{
             console.log('Listening on port 3000 started');
             console.log('Connected to database');
         })
