@@ -10,16 +10,16 @@ const app = express();
 
 app.use(bodyParser.json());
 
-app.use((err , req , res , next)=>{
+app.use((err, req, res, next) => {
     res.status(err.status).json({
 
-       error: {
-           message :err.message
-       }
+        error: {
+            message: err.message
+        }
     });
 });
 
-app.set('view engine' , 'ejs');
+app.set('view engine', 'ejs');
 
 const path = require('path');
 
@@ -33,13 +33,13 @@ const schema = joi.object().keys({
 });
 
 
-db.connect((err)=>{
-    if(err) {
+db.connect((err) => {
+    if (err) {
         console.log('Unable to connect to database. Connection error occurred');
         process.exit(1);
     }
-    else{
-        app.listen(3000 , ()=>{
+    else {
+        app.listen(3000, () => {
             console.log('Listening on port 3000 started');
             console.log('Connected to database');
         })
@@ -47,16 +47,16 @@ db.connect((err)=>{
 });
 
 
-app.get('/' , (res , req) =>{
+app.get('/', (res, req) => {
 
-   req.render('main')
+    req.render('main')
 });
 
- app.get('/getAll' , (res , req) =>{
-    db.getDB().collection(collection).find({}).toArray((err , documents)=> {
-        if(err)
+app.get('/getAll', (res, req) => {
+    db.getDB().collection(collection).find({}).toArray((err, documents) => {
+        if (err)
             console.log(err);
-        else{
+        else {
             console.log(documents);
             req.json(documents);
         }
@@ -64,7 +64,7 @@ app.get('/' , (res , req) =>{
 });
 
 
-app.put('/:id' , (req , res , next)=> {
+app.put('/:id', (req, res, next) => {
     const taskId = req.params.id;
     const userInput = req.body;
 
@@ -88,46 +88,46 @@ app.put('/:id' , (req , res , next)=> {
     });
 });
 
-    app.post('/', (req, res, next) => {
+app.post('/', (req, res, next) => {
 
-        const userInput = req.body;
+    const userInput = req.body;
 
-        joi.validate(userInput, schema, (err, result) => {
-            if (err) {
-                const error = new Error("Invalid Input");
-                error.status = 400;
-                next(error);
-            }
-            else {
+    joi.validate(userInput, schema, (err, result) => {
+        if (err) {
+            const error = new Error("Invalid Input");
+            error.status = 400;
+            next(error);
+        }
+        else {
 
-                db.getDB().collection(collection).insertOne(userInput, (err, result) => {
-                    if (err) {
-                        const error = new Error("Failed to save");
-                        error.status = 400;
-                        next(error);
-                    }
-                    else
-                        res.json({result: result, document: result.ops[0], msg: "Successfully inserted!", error: null});
-                });
-            }
-        });
-
-
+            db.getDB().collection(collection).insertOne(userInput, (err, result) => {
+                if (err) {
+                    const error = new Error("Failed to save");
+                    error.status = 400;
+                    next(error);
+                }
+                else
+                    res.json({result: result, document: result.ops[0], msg: "Successfully inserted!", error: null});
+            });
+        }
     });
 
-    app.delete('/:id', (req, res) => {
 
-        const taskID = req.params.id;
+});
 
-        db.getDB().collection(collection).findOneAndDelete({_id: db.getPrimaryKey(taskID)}, (err, result) => {
-            if (err)
-                console.log(err);
-            else {
-                res.json(result);
-            }
-        });
+app.delete('/:id', (req, res) => {
 
+    const taskID = req.params.id;
+
+    db.getDB().collection(collection).findOneAndDelete({_id: db.getPrimaryKey(taskID)}, (err, result) => {
+        if (err)
+            console.log(err);
+        else {
+            res.json(result);
+        }
     });
+
+});
 
 
 

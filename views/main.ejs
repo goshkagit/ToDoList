@@ -140,7 +140,9 @@
                     "Content-Type": "application/json; charset=utf-8"
                 },
                 statusCode: {
-                    400: ()=>{$("#input").attr('placeholder', 'Wrong Input');}
+                    400: () => {
+                        $("#input").attr('placeholder', 'Wrong Input');
+                    }
                 },
             }).then((response) => {
                 return response.json();
@@ -150,7 +152,7 @@
                         let ids = build(data.document);
                         display.append(buildTemplate(data.document, ids));
                         $("#input").attr('placeholder', 'Added Successfully');
-                        edit(data.document, ids.todoID, ids.editID,ids.formID);
+                        edit(data.document, ids.todoID, ids.editID, ids.formID);
                         deleteTask(data.document, ids.listItemID, ids.deleteID);
                     }
                 }
@@ -160,7 +162,7 @@
             });
         });
 
-        const edit = (todo, todoID, editID ,formID) => {
+        const edit = (todo, todoID, editID, formID) => {
 
             let editSb = $(`#${editID}`);
 
@@ -171,7 +173,9 @@
                         "Content-Type": "application/json; charset=utf-8"
                     },
                     statusCode: {
-                      400: ()=>{$("#input").attr('placeholder', 'Wrong Input');}
+                        400: () => {
+                            $("#input").attr('placeholder', 'Wrong Input');
+                        }
                     },
 
                     body: JSON.stringify({todo: $(`#${formID}`).val()})
