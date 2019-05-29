@@ -22,3 +22,7 @@ tmp/
 .cache
 dist
 build
+
+
+/routes/
+public/
