@@ -1,15 +1,9 @@
 const dotenv = require('dotenv/config');
-
 const MongoClient = require('mongodb').MongoClient;
-
 const ObjectId = require('mongodb').ObjectID;
-
 const dbName = "list";
-
 const url = "mongodb://localhost:27017/list";
-
 const mongoOptions = {useNewUrlParser: true};
-
 
 const state = {
     db: null

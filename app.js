@@ -1,12 +1,11 @@
 const express = require('express');
-
 const dotenv = require('dotenv');
-
 const bodyParser = require('body-parser');
-
 const joi = require('joi');
-
 const app = express();
+const path = require('path');
+const db = require('./data');
+const collection = "todo";
 
 app.use(bodyParser.json());
 
@@ -21,11 +20,6 @@ app.use((err, req, res, next) => {
 
 app.set('view engine', 'ejs');
 
-const path = require('path');
-
-const db = require('./data');
-
-const collection = "todo";
 
 
 const schema = joi.object().keys({
