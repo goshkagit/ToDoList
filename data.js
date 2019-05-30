@@ -5,11 +5,7 @@ const dbName = "list";
 const url = "mongodb://localhost:27017/list";
 const mongoOptions = {useNewUrlParser: true ,   useCreateIndex: true};
 
-const state = {
-    db: null
-};
-
-const connect = function () {
+const connect = function (cb) {
 
     return new Promise((resolve, reject) => {
         mongoose.Promise = global.Promise;
@@ -23,6 +19,7 @@ const connect = function () {
 
         mongoose.connect(url, mongoOptions);
         console.log("Connected successfully to database server");
+
     })
 };
 
@@ -30,12 +27,7 @@ const getPrimaryKey = (_id) => {
     return ObjectId(_id);
 };
 
-const getDB = () => {
-    return state.db;
-};
-
 module.exports = {
-    getDB,
     connect,
     getPrimaryKey
 };

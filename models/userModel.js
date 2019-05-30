@@ -18,5 +18,8 @@ const schema = new Schema({
         timestamps: true
     });
 
+schema.set('toJSON', {
+    virtuals: true
+});
 
 module.exports = mongoose.model('User' , schema);

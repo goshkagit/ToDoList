@@ -1,18 +1,34 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
-const joi = require('joi');
 const app = express();
-const path = require('path');
 const db = require('./data');
-const collection = "todo";
 const bcrypt = require('bcrypt-nodejs');
 const models = require('./models');
+const session = require('express-session');
+const mongoose = require('mongoose');
+const MongoStore = require('connect-mongo')(session);
 
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static('public'));
+
+
+app.use(
+    session({
+        secret: 'GxjTWP4Mth25rQyB',
+        resave: true,
+        saveUninitialized: false,
+        unset: 'destroy',
+        cookie: {
+            secure: true,
+            maxAge: 6 * 60 * 60 * 1000
+        },
+        store: new MongoStore({mongooseConnection: mongoose.connection})
+    })
+);
+
 
 app.use((err, req, res, next) => {
     res.status(err.status).json({
@@ -26,26 +42,23 @@ app.use((err, req, res, next) => {
 app.set('view engine', 'ejs');
 
 
-const schema = joi.object().keys({
-    todo: joi.string().required()
+db.connect();
+
+app.listen(3000, () => {
+    console.log('Listening on port 3000 started');
 });
 
 
-db.connect();
+app.get('/', (res, req) => {
 
-   app.listen(3000, () => {
-       console.log('Listening on port 3000 started');
-   });
-
-
-    app.get('/', (res, req) => {
-        req.render('main');
-    });
+    req.render('main');
+});
 
     app.get('/enter', (res, req) => {
         req.render('register');
     });
 
+//registration
     app.post('/enter', (req, res) => {
         let login = req.body.login;
         let password = req.body.password;
@@ -57,7 +70,14 @@ db.connect();
                 error: 'All fields must be fulled',
                 fields: ['login', 'password', 'passwordConfirm']
             });
-        } else if (login.length < 3 || login.length > 16) {
+        } else if (!/^[a-zA-Z0-9]+$/.test(login)) {
+            res.json({
+                ok: false,
+                error: 'Only latin letters and numbers',
+                fields: ['login']
+            });
+        }
+        else if (login.length < 3 || login.length > 16) {
             res.json({
                 ok: false,
                 error: 'Login must be > than 3  and < than 16',
@@ -90,7 +110,6 @@ db.connect();
                         })
                     });
                 } else {
-
                     res.json({
                         ok: false,
                         error: 'This login is already used',
@@ -102,8 +121,59 @@ db.connect();
     });
 
 
+//log in
+
+    app.post('/enter/login', (req, res) => {
+
+        let login = req.body.login;
+        let password = req.body.password;
+
+        if (!login || !password) {
+            res.json({
+                ok: false,
+                error: 'All fields must be fulled',
+                fields: ['login', 'password']
+            });
+        } else {
+            models.User.findOne({
+                login
+            }).then(user => {
+                if (!user) {
+                    res.json({
+                        ok: false,
+                        error: 'User with this login or password don`t exist',
+                        fields: ['login', 'password']
+                    });
+                } else {
+                    bcrypt.compare(password, user.password, (err, result) => {
+                        if (!result) {
+                            res.json({
+                                ok: false,
+                                error: 'Incorrect password',
+                                fields: ['login', 'password']
+                            });
+                        } else {
+                            req.session.userId = user.id;
+                            req.session.userLogin = user.login;
+                            res.json({
+                                ok: true
+                            });
+
+                        }
+                    });
+                }
+            }).catch(err => {
+                res.json({
+                    ok: false,
+                    error: 'An error occurred'
+                });
+            });
+        }
+    });
+
+
     app.get('/getAll', (res, req) => {
-        db.getDB().collection(collection).find({}).toArray((err, documents) => {
+       models.Task.find({}).exec((err, documents) => {
             if (err) {
                 console.log(err);
                 req.json(err);
@@ -111,23 +181,17 @@ db.connect();
             else {
                 req.json(documents);
             }
-        })
+        });
     });
 
 
-    app.put('/:id', (req, res, next) => {
+    app.put('/:id', (req, res) => {
         const taskId = req.params.id;
-        const userInput = req.body;
+        const{tittle , task} = req.body;
 
-        joi.validate(userInput, schema, (err, result) => {
-            if (err) {
-                const error = new Error("Invalid Input");
-                error.status = 400;
-                next(error);
-            }
-            else {
-                db.getDB().collection(collection).findOneAndUpdate({_id: db.getPrimaryKey(taskId)},
-                    {$set: {todo: userInput.todo}}, {returnOriginal: false},
+
+             models.Task.findOneAndUpdate({_id: db.getPrimaryKey(taskId)},
+                    {$set: {title: tittle, task: task}}, {returnOriginal: false},
                     (err, result) => {
                         if (err)
                             console.log(err);
@@ -135,50 +199,34 @@ db.connect();
                             res.json(result);
                         }
                     });
-            }
+
+    });
+
+    app.post('/', (req, res) => {
+        const{tittle , task} = req.body;
+
+     models.Task.create({
+       tittle: tittle,
+       task: task
+   }).then(task => console.log(task));
+        res.json({
+            ok: true
         });
     });
 
-    app.post('/', (req, res, next) => {
-
-        const userInput = req.body;
-
-        joi.validate(userInput, schema, (err, result) => {
-            if (err) {
-                const error = new Error("Invalid Input");
-                error.status = 400;
-                next(error);
-            }
-            else {
-
-                db.getDB().collection(collection).insertOne(userInput, (err, result) => {
-                    if (err) {
-                        const error = new Error("Failed to save");
-                        error.status = 400;
-                        next(error);
-                    }
-                    else
-                        res.json({result: result, document: result.ops[0], msg: "Successfully inserted!", error: null});
-                });
-            }
-        });
-
-
-    });
 
     app.delete('/:id', (req, res) => {
 
         const taskID = req.params.id;
-
-        db.getDB().collection(collection).findOneAndDelete({_id: db.getPrimaryKey(taskID)}, (err, result) => {
+      models.Task.findOneAndDelete({_id: db.getPrimaryKey(taskID)}, (err, result) => {
             if (err)
                 console.log(err);
             else {
                 res.json(result);
             }
         });
-
     });
+
 
 
 

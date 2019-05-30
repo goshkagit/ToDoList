@@ -6,13 +6,15 @@
     <div class="row">
         <div class="col-lg-2"></div>
         <div class="col-lg-8">
+            <div class="col-lg-2">Welcome! <b><%= user.login %></b></div>
             <form id="form">
                 <div class="form-group">
                     <div>
                     </div>
                     <label for="todo"></label>
                     <p></p>  <b>To DO:</b>
-                    <p></p> <input type="text" class="form-control" id="input" placeholder=" ">
+                    <p></p> <input type="text" name="tittle" class="form-control" id="input" placeholder="Tittle">
+                    <p></p> <input type="text" name="task" class="form-control" id="input" placeholder="Task">
                     <p></p>
                     <div>
                         <button type="submit" class="btn btn-primary">Add</button>

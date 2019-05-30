@@ -4,78 +4,105 @@
 <% include layouts/head.ejs %>
 
 <body>
-<div>
+<div class="container">
 <form method="post" class="login">
-    <h2>Log in</h2>
+    <p></p>
+    <h2 align="center">Log in</h2>
     <div class="form-group">
         <label for="login-login">Login</label>
-        <input type="text" id="login-login" name="login"/>
+        <input type="text" class="form-control" id="login-login" name="login"/>
     </div>
     <div class="form-group">
         <label for="login-password">Password</label>
-        <input type="password" id="login-password" name="password"/>
+        <input type="password" class="form-control" id="login-password" name="password"/>
     </div>
     <div>
-        <button class="login-button">Log in</button>
+        <button class="btn btn-primary" id="login-button">Log in</button>
     </div>
+    <p></p>
 </form>
 </div>
 
-<div>
+<div class="container">
 <form method="post" class="register">
-    <h2>Registration</h2>
+    <h2 align="center">Registration</h2>
     <div class="form-group">
         <label for="register-login">Login</label>
-        <input type="text" id="register-login" name="login"/>
+        <input type="text" class="form-control" id="register-login" name="login"/>
     </div>
     <div class="form-group">
         <label for="register-password">Password</label>
-        <input type="password" id="register-password" name="password"/>
+        <input type="password" class="form-control" id="register-password" name="password"/>
     </div>
     <div class="form-group">
         <label for="register-password-confirm">Confirm Password</label>
-        <input type="password" id="register-password-confirm" name="passwordConfirm"/>
+        <input type="password" class="form-control" id="register-password-confirm" name="passwordConfirm"/>
     </div>
     <div class="buttons">
-        <button class="register-button">Registration</button>
+        <button id="register-button" class="btn btn-primary">Registration</button>
     </div>
 </form>
 </div>
 <p></p>
 
 <script>
+
+
+    //registration
+
     $(document).ready(() => {
+        $('#register-button').on('click', (e) => {
+            e.preventDefault();
 
-            $('#register-button').on('click', (e) => {
-                e.preventDefault();
+            let data = {
+                login: $('#register-login').val(),
+                password: $('#register-password').val(),
+                passwordConfirm: $('#register-password-confirm').val()
+            };
 
-                let data = {
-                    login: $('#register-login').val(),
-                    password: $('#register-password').val(),
-                    passwordConfirm: $('#register-password-confirm').val()
+            $.ajax({
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                url: '/enter'
+            }).done((data) => {
+                if (!data.ok) {
+
+                    $('.register h2').after('<p class="error" style="color: red">' + data.error + '</p>');
+
+                } else {
+                    $('.register h2').after('<p class="success" style="color: dodgerblue">Success</p>');
                 }
-              $.ajax({
-                  type: 'POST',
-                  data: JSON.stringify(data),
-                  contentType: 'application/json',
-                  url: '/enter'
-              }).done(data =>{
-                  if (!data.ok) {
-                      alert(data.error);
-                      if (data.fields) {
-                          data.fields.forEach(function(item) {
-                              $('input[name=' + item + ']').addClass('error');
-                          });
-                      }
-                  } else {
-                      $('.register h2').after('<p class="success">Отлично!</p>');
-                  }
-              });
-
             });
         });
+    });
 
 
+    //login
+
+    $('#login-button').on('click', (e) => {
+        e.preventDefault();
+        let data = {
+            login: $('#login-login').val(),
+            password: $('#login-password').val()
+        };
+
+        $.ajax({
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            url: '/enter/login'
+        }).done((data) => {
+            if (!data.ok) {
+
+                $('.login h2').after('<p class="error" style="color: red">' + data.error + '</p>');
+
+            } else {
+                $('.login h2').after('<p class="success" style="color: dodgerblue">Success</p>');
+                $(location).attr('href', '/');
+            }
+        });
+    });
 
 </script>
 </body>
