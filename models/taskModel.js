@@ -6,20 +6,12 @@ const schema = new Schema({
 
         tittle: {
             type: String,
+            required: true
         },
         task: {
             type: String,
             required: true,
-            unique: true
         },
-        // whoPosted: {
-        //     type: String,
-        //     required: true,
-        // },
-
-    },
-    {
-        timestamps: true
     });
 
 schema.set('toJSON', {

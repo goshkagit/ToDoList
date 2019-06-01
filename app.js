@@ -3,23 +3,77 @@ const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const app = express();
 const db = require('./data');
+const router = require('./routes/crud');
+const logRouter = require('./routes/reg');
+const uuid = require('uuid/v4');
+const passport = require('passport');
 const bcrypt = require('bcrypt-nodejs');
-const models = require('./models');
 const session = require('express-session');
+const LocalStrategy = require('passport-local').Strategy;
+const models = require('./models');
 const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo')(session);
 
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static('public'));
+app.use(router , logRouter);
 
+db.connect();
 
+app.listen(3000, () => {
+    console.log('Listening on port 3000 started');
+});
+
+passport.use(new LocalStrategy(
+    { usernameField: 'login' },
+    (login, password, done) => {
+        console.log('Inside local strategy callback');
+
+        models.User.findOne({
+            login
+        }).then(user => {
+                if (!user) {
+                    console.log('User with this login or password don`t exist');
+                    process.exit(1);
+                } else {
+                    bcrypt.compare(password, user.password, (err, result) => {
+                        if (!result) {
+                            console.log('Incorrect password');
+                            process.exit(1);
+                        }
+                     else {
+                            console.log('Local strategy returned true');
+                            return done(null, user)
+                        }
+                    });
+                }
+            }
+        )
+    }));
+
+passport.serializeUser((user, done) => {
+    console.log(' serializeUser callback. User id is save to the session file store here');
+    done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+    console.log(' deserializeUser callback');
+    console.log(` user id passport saved in the session file store is: ${id}`);
+    const user = models.User.findById(id);
+    done(null, user);
+});
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use(
     session({
+        genid: (req) => {
+            console.log(`sessionID from client: ${req.sessionID}`);
+            return uuid()
+        },
         secret: 'GxjTWP4Mth25rQyB',
         resave: true,
-        saveUninitialized: false,
+        saveUninitialized: true,
         unset: 'destroy',
         cookie: {
             secure: true,
@@ -29,203 +83,57 @@ app.use(
     })
 );
 
+app.use(passport.initialize());
+app.use(passport.session());
 
-app.use((err, req, res, next) => {
-    res.status(err.status).json({
 
-        error: {
-            message: err.message
-        }
-    });
+
+app.post('/login', (req, res, next) => {
+    console.log('POST /login callback');
+    passport.authenticate('local', (err, user, info) => {
+        console.log('passport.authenticate() callback');
+        console.log(`req.session.passport: ${JSON.stringify(req.session.passport)}`);
+        console.log(`req.user: ${JSON.stringify(req.user)}`);
+        req.login(user, (err) => {
+            console.log('req.login() callback');
+            console.log(`req.session.passport: ${JSON.stringify(req.session.passport)}`);
+            console.log(`req.user: ${JSON.stringify(req.user)}`);
+            return res.send('You were authenticated & logged in!');
+        });
+        console.log(`User authenticated? ${req.isAuthenticated()}`);
+    })(req, res, next);
 });
 
-app.set('view engine', 'ejs');
+router.get('/getAll' , (req , res)=>{
+    console.log(`User authenticated? ${req.isAuthenticated()}`);
+    if(req.isAuthenticated()) {
 
+        let query = models.Task.find({});
 
-db.connect();
-
-app.listen(3000, () => {
-    console.log('Listening on port 3000 started');
-});
-
-
-app.get('/', (res, req) => {
-
-    req.render('main');
-});
-
-    app.get('/enter', (res, req) => {
-        req.render('register');
-    });
-
-//registration
-    app.post('/enter', (req, res) => {
-        let login = req.body.login;
-        let password = req.body.password;
-        let passwordConfirm = req.body.passwordConfirm;
-
-        if (!login || !password || !passwordConfirm) {
-            res.json({
-                ok: false,
-                error: 'All fields must be fulled',
-                fields: ['login', 'password', 'passwordConfirm']
-            });
-        } else if (!/^[a-zA-Z0-9]+$/.test(login)) {
-            res.json({
-                ok: false,
-                error: 'Only latin letters and numbers',
-                fields: ['login']
-            });
-        }
-        else if (login.length < 3 || login.length > 16) {
-            res.json({
-                ok: false,
-                error: 'Login must be > than 3  and < than 16',
-                fields: ['login']
-            });
-        } else if (password !== passwordConfirm) {
-            res.json({
-                ok: false,
-                error: 'Passwords are not the same',
-                fields: ['password', 'passwordConfirm']
-            });
-        } else {
-            models.User.findOne({
-                login
-            }).then(user => {
-                if (!user) {
-                    bcrypt.hash(password, null, null, (err, hash) => {
-                        models.User.create({
-                            login,
-                            password: hash
-                        }).then(user => {
-                            res.json({
-                                ok: true
-                            });
-                        }).catch(err => {
-                            res.json({
-                                ok: false,
-                                error: 'An error occurred'
-                            });
-                        })
-                    });
-                } else {
-                    res.json({
-                        ok: false,
-                        error: 'This login is already used',
-                        fields: ['login']
-                    });
-                }
-            });
-        }
-    });
-
-
-//log in
-
-    app.post('/enter/login', (req, res) => {
-
-        let login = req.body.login;
-        let password = req.body.password;
-
-        if (!login || !password) {
-            res.json({
-                ok: false,
-                error: 'All fields must be fulled',
-                fields: ['login', 'password']
-            });
-        } else {
-            models.User.findOne({
-                login
-            }).then(user => {
-                if (!user) {
-                    res.json({
-                        ok: false,
-                        error: 'User with this login or password don`t exist',
-                        fields: ['login', 'password']
-                    });
-                } else {
-                    bcrypt.compare(password, user.password, (err, result) => {
-                        if (!result) {
-                            res.json({
-                                ok: false,
-                                error: 'Incorrect password',
-                                fields: ['login', 'password']
-                            });
-                        } else {
-                            req.session.userId = user.id;
-                            req.session.userLogin = user.login;
-                            res.json({
-                                ok: true
-                            });
-
-                        }
-                    });
-                }
-            }).catch(err => {
-                res.json({
-                    ok: false,
-                    error: 'An error occurred'
-                });
-            });
-        }
-    });
-
-
-    app.get('/getAll', (res, req) => {
-       models.Task.find({}).exec((err, documents) => {
+        query.exec((err, documents) => {
             if (err) {
-                console.log(err);
-                req.json(err);
-            }
-            else {
-                req.json(documents);
+                res.json({
+                    ok: false
+                })
+            } else {
+                res.json({
+                    documents: documents
+                })
             }
         });
-    });
-
-
-    app.put('/:id', (req, res) => {
-        const taskId = req.params.id;
-        const{tittle , task} = req.body;
-
-
-             models.Task.findOneAndUpdate({_id: db.getPrimaryKey(taskId)},
-                    {$set: {title: tittle, task: task}}, {returnOriginal: false},
-                    (err, result) => {
-                        if (err)
-                            console.log(err);
-                        else {
-                            res.json(result);
-                        }
-                    });
-
-    });
-
-    app.post('/', (req, res) => {
-        const{tittle , task} = req.body;
-
-     models.Task.create({
-       tittle: tittle,
-       task: task
-   }).then(task => console.log(task));
+    } else {
         res.json({
-            ok: true
+            ok: false,
+            error: 'You are not logged in!'
         });
-    });
+    }
+});
 
 
-    app.delete('/:id', (req, res) => {
 
-        const taskID = req.params.id;
-      models.Task.findOneAndDelete({_id: db.getPrimaryKey(taskID)}, (err, result) => {
-            if (err)
-                console.log(err);
-            else {
-                res.json(result);
-            }
-        });
-    });
+
+
+
 
 
 

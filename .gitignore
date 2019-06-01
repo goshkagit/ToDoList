@@ -3,7 +3,6 @@
 .idea/
 bin/
 node_modules/
-routes/
 /package-lock.json
 .DS_Store
 dist/*
@@ -22,7 +21,7 @@ tmp/
 .cache
 dist
 build
-/routes/
 public/
 ToDoList.iml
 package-lock.json
+
