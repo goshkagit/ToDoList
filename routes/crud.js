@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const models = require('../models');
 const db = require('../data');
+const auth = require('../config/auth');
 
-router.post('/add' , (req , res)=> {
+
+router.post('/add', auth.auth.required, (req, res) => {
     if (req.isAuthenticated()) {
 
 
@@ -42,34 +44,24 @@ router.post('/add' , (req , res)=> {
 });
 
 
+router.get('/getAll', auth.auth.required, (req, res) => {
 
-router.get('/getAll' , (req , res)=>{
-    console.log(`User authenticated? ${req.isAuthenticated()}`);
-    if(req.isAuthenticated()) {
-
-        let query = models.Task.find({});
-
-        query.exec((err, documents) => {
-            if (err) {
-                res.json({
-                    ok: false
-                })
-            } else {
-                res.json({
-                    documents: documents
-                })
-            }
-        });
-    } else {
-        res.json({
-            ok: false,
-            error: 'You are not logged in!'
-        });
-    }
+    let query = models.Task.find({});
+    query.exec((err, documents) => {
+        if (err) {
+            res.json({
+                ok: false
+            })
+        } else {
+            res.json({
+                documents: documents
+            })
+        }
+    });
 });
 
-router.put('/:id' ,(req, res) => {
-    if(req.isAuthenticated()) {
+router.put('/:id', auth.auth.required, (req, res) => {
+    if (req.isAuthenticated()) {
 
         const taskId = req.params.id;
         const {tittle, task} = req.body;
@@ -78,7 +70,7 @@ router.put('/:id' ,(req, res) => {
             (err, result) => {
                 if (err)
                     res.json({
-                        ok:  false,
+                        ok: false,
                         error: 'An error occurred'
                     });
                 else {
@@ -95,13 +87,13 @@ router.put('/:id' ,(req, res) => {
     }
 });
 
-router.delete('/:id', (req, res) => {
-    if(req.isAuthenticated()) {
+router.delete('/:id', auth.auth.required, (req, res) => {
+    if (req.isAuthenticated()) {
         const taskId = req.params.id;
         models.Task.findOneAndDelete({_id: db.getPrimaryKey(taskId)}, (err, result) => {
             if (err)
                 res.json({
-                    ok:  false,
+                    ok: false,
                     error: 'An error occurred'
                 });
             else {

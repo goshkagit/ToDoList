@@ -4,15 +4,15 @@ const Schema = mongoose.Schema;
 
 const schema = new Schema({
 
-        tittle: {
-            type: String,
-            required: true
-        },
-        task: {
-            type: String,
-            required: true,
-        },
-    });
+    tittle: {
+        type: String,
+        required: true
+    },
+    task: {
+        type: String,
+        required: true,
+    },
+});
 
 schema.set('toJSON', {
     virtuals: true
