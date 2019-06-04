@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const ObjectId = require('mongodb').ObjectID;
 const dbName = "list";
 const url = "mongodb://localhost:27017/list";
-const mongoOptions = {useNewUrlParser: true, useCreateIndex: true};
+const mongoOptions = {useNewUrlParser: true, useCreateIndex: true, useFindAndModify: false };
 
 const connect = function (cb) {
 

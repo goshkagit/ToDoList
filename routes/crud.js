@@ -5,16 +5,16 @@ const db = require('../data');
 const auth = require('../config/auth');
 
 
-router.post('/add', auth.auth.required, (req, res) => {
-    if (req.isAuthenticated()) {
+router.post('/:login/add', auth.auth.required, (req, res) => {
 
+        let {tittle, task} = req.body;
+        let login = req.params.login;
 
-        const {tittle, task} = req.body;
         models.Task.create({
             tittle: tittle,
-            task: task
+            task: task,
+            whoPosted: login
         }).then(task => {
-
             console.log(task);
             if (!task) {
                 res.json({
@@ -34,19 +34,13 @@ router.post('/add', auth.auth.required, (req, res) => {
             });
         });
 
-    } else {
-        res.json({
-            ok: false,
-            error: 'You are not logged in!'
-        });
-    }
-
 });
 
+router.get('/:login/getAll', auth.auth.required, (req, res) => {
 
-router.get('/getAll', auth.auth.required, (req, res) => {
+    let login = req.params.login;
+    let query = models.Task.find({whoPosted: login});
 
-    let query = models.Task.find({});
     query.exec((err, documents) => {
         if (err) {
             res.json({
@@ -60,11 +54,11 @@ router.get('/getAll', auth.auth.required, (req, res) => {
     });
 });
 
-router.put('/:id', auth.auth.required, (req, res) => {
-    if (req.isAuthenticated()) {
+router.put('/:id', auth.auth.required, (req, res) =>{
 
-        const taskId = req.params.id;
-        const {tittle, task} = req.body;
+        let taskId = req.params.id;
+        let {tittle, task} = req.body;
+
         models.Task.findOneAndUpdate({_id: db.getPrimaryKey(taskId)},
             {$set: {title: tittle, task: task}}, {returnOriginal: false},
             (err, result) => {
@@ -79,17 +73,12 @@ router.put('/:id', auth.auth.required, (req, res) => {
                     });
                 }
             });
-    } else {
-        res.json({
-            ok: false,
-            error: 'You are not logged in!'
-        });
-    }
 });
 
 router.delete('/:id', auth.auth.required, (req, res) => {
-    if (req.isAuthenticated()) {
-        const taskId = req.params.id;
+
+        let taskId = req.params.id;
+
         models.Task.findOneAndDelete({_id: db.getPrimaryKey(taskId)}, (err, result) => {
             if (err)
                 res.json({
@@ -102,12 +91,6 @@ router.delete('/:id', auth.auth.required, (req, res) => {
                 });
             }
         });
-    } else {
-        res.json({
-            ok: false,
-            error: 'You are not logged in!'
-        });
-    }
 });
 
 module.exports = router;

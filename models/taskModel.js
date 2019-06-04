@@ -10,8 +10,12 @@ const schema = new Schema({
     },
     task: {
         type: String,
-        required: true,
+        required: true
     },
+    whoPosted: {
+        type: String,
+        required: true
+    }
 });
 
 schema.set('toJSON', {

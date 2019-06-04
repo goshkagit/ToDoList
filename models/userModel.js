@@ -12,6 +12,10 @@ const schema = new Schema({
         type: String,
         required: true
     },
+    token:{
+        type: String,
+        required: false
+    }
 });
 
 
@@ -19,17 +23,6 @@ schema.set('toJSON', {
     virtuals: true
 });
 
-
-schema.methods.generateJWT = function () {
-
-};
-
-schema.methods.toAuth = () => {
-    return {
-
-        token: this.generateJWT()
-    };
-};
 
 
 module.exports = mongoose.model('User', schema);

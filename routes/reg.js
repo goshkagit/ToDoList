@@ -46,7 +46,8 @@ logRouter.post('/reg',auth.auth.optional, (req, res) => {
                 bcrypt.hash(password, null, null, (err, hash) => {
                     models.User.create({
                         login,
-                        password: hash
+                        password: hash,
+                        token: 'Token'
                     }).then(user => {
                         res.send('Registration compete successfully');
                         res.json({
@@ -101,9 +102,20 @@ logRouter.post('/login', auth.auth.optional, (req, res, next) => {
         }
 
         if (passportUser) {
+            let token = auth.generate(passportUser);
+
+            models.User.findOneAndUpdate({login: passportUser.login},
+                {$set: {token: token}}, {returnOriginal: false},
+                (err, result) => {
+                    if (err)
+                        res.json({
+                            ok: false,
+                            error: 'An error occurred'
+                        });
+                });
             return res.json({
                 login: passportUser.login,
-                token: 'Token' + auth.generate(passportUser)
+                token: 'Token ' + token
             });
         }
 
